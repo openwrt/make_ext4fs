@@ -244,6 +244,40 @@ u32 make_link(const char *link)
 	return inode_num;
 }
 
+/* Creates a special file on disk.  Returns the inode number of the new file */
+u32 make_special(const char *path)
+{
+	struct ext4_inode *inode;
+	struct stat s;
+	u32 inode_num;
+
+	if (stat(path, &s)) {
+		error("failed to stat file\n");
+		return EXT4_ALLOCATE_FAILED;
+	}
+
+	inode_num = allocate_inode(info);
+	if (inode_num == EXT4_ALLOCATE_FAILED) {
+		error("failed to allocate inode\n");
+		return EXT4_ALLOCATE_FAILED;
+	}
+
+	inode = get_inode(inode_num);
+	if (inode == NULL) {
+		error("failed to get inode %u", inode_num);
+		return EXT4_ALLOCATE_FAILED;
+	}
+
+	inode->i_mode = s.st_mode & S_IFMT;
+	inode->i_links_count = 1;
+	inode->i_flags |= aux_info.default_i_flags;
+
+	((u8 *)inode->i_block)[0] = major(s.st_rdev);
+	((u8 *)inode->i_block)[1] = minor(s.st_rdev);
+
+	return inode_num;
+}
+
 int inode_set_permissions(u32 inode_num, u16 mode, u16 uid, u16 gid, u32 mtime)
 {
 	struct ext4_inode *inode = get_inode(inode_num);
