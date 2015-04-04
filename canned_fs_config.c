@@ -53,6 +53,10 @@ int load_canned_fs_config(const char* fn) {
 		}
 		Path* p = canned_data + canned_used;
 		p->path = strdup(strtok(line, " \t"));
+
+		if (!p->path || !*p->path || *p->path == '#')
+			continue;
+
 		p->uid = atoi(strtok(NULL, " \t"));
 		p->gid = atoi(strtok(NULL, " \t"));
 		p->mode = strtol(strtok(NULL, " \t"), NULL, 8);   // mode is in octal
