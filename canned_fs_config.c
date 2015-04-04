@@ -52,15 +52,15 @@ int load_canned_fs_config(const char* fn) {
 			canned_data = (Path*) realloc(canned_data, canned_alloc * sizeof(Path));
 		}
 		Path* p = canned_data + canned_used;
-		p->path = strdup(strtok(line, " "));
-		p->uid = atoi(strtok(NULL, " "));
-		p->gid = atoi(strtok(NULL, " "));
-		p->mode = strtol(strtok(NULL, " "), NULL, 8);   // mode is in octal
+		p->path = strdup(strtok(line, " \t"));
+		p->uid = atoi(strtok(NULL, " \t"));
+		p->gid = atoi(strtok(NULL, " \t"));
+		p->mode = strtol(strtok(NULL, " \t"), NULL, 8);   // mode is in octal
 		p->capabilities = 0;
 
 		char* token = NULL;
 		do {
-			token = strtok(NULL, " ");
+			token = strtok(NULL, " \t");
 			if (token && strncmp(token, "capabilities=", 13) == 0) {
 				p->capabilities = strtoll(token+13, NULL, 0);
 				break;
