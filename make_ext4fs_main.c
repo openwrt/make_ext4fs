@@ -25,10 +25,6 @@
 #include <sys/disk.h>
 #endif
 
-#ifdef ANDROID
-#include <private/android_filesystem_config.h>
-#endif
-
 #include "make_ext4fs.h"
 #include "ext4_utils.h"
 #include "canned_fs_config.h"
@@ -64,7 +60,7 @@ int main(int argc, char **argv)
 	time_t fixed_time = -1;
 	FILE* block_list_file = NULL;
 
-	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:a:T:C:B:fwzJsctv")) != -1) {
+	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:T:C:B:fwzJsctv")) != -1) {
 		switch (opt) {
 		case 'l':
 			info.len = parse_num(optarg);
@@ -89,15 +85,6 @@ int main(int argc, char **argv)
 			break;
 		case 'f':
 			force = 1;
-			break;
-		case 'a':
-#ifdef ANDROID
-			mountpoint = optarg;
-#else
-			fprintf(stderr, "can't set android permissions - built without android support\n");
-			usage(argv[0]);
-			exit(EXIT_FAILURE);
-#endif
 			break;
 		case 'w':
 			wipe = 1;

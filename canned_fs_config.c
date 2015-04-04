@@ -20,8 +20,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "private/android_filesystem_config.h"
-
 #include "canned_fs_config.h"
 
 typedef struct {

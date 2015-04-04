@@ -147,7 +147,6 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 		}
 		uint64_t capabilities;
 		if (fs_config_func != NULL) {
-#ifdef ANDROID
 			unsigned int mode = 0;
 			unsigned int uid = 0;
 			unsigned int gid = 0;
@@ -157,9 +156,6 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 			dentries[i].uid = uid;
 			dentries[i].gid = gid;
 			dentries[i].capabilities = capabilities;
-#else
-			error("can't set android permissions - built without android support");
-#endif
 		}
 
 		if (S_ISREG(stat.st_mode)) {
