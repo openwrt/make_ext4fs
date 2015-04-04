@@ -18,11 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef HAVE_ANDROID_OS
-#include <linux/capability.h>
-#else
 #include <private/android_filesystem_capability.h>
-#endif
 
 #define XATTR_SELINUX_SUFFIX "selinux"
 #define XATTR_CAPS_SUFFIX "capability"
@@ -495,15 +491,6 @@ static int xattr_add(u32 inode_num, int name_index, const char *name,
 		result = xattr_addto_block(inode, name_index, name, value, value_len);
 	}
 	return result;
-}
-
-int inode_set_selinux(u32 inode_num, const char *secon)
-{
-	if (!secon)
-		return 0;
-
-	return xattr_add(inode_num, EXT4_XATTR_INDEX_SECURITY,
-		XATTR_SELINUX_SUFFIX, secon, strlen(secon) + 1);
 }
 
 int inode_set_capabilities(u32 inode_num, uint64_t capabilities) {
