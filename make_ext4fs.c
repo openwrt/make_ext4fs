@@ -35,34 +35,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef USE_MINGW
-
-#include <winsock2.h>
-
-/* These match the Linux definitions of these flags.
-   L_xx is defined to avoid conflicting with the win32 versions.
-*/
-#define L_S_IRUSR 00400
-#define L_S_IWUSR 00200
-#define L_S_IXUSR 00100
-#define S_IRWXU (L_S_IRUSR | L_S_IWUSR | L_S_IXUSR)
-#define S_IRGRP 00040
-#define S_IWGRP 00020
-#define S_IXGRP 00010
-#define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
-#define S_IROTH 00004
-#define S_IWOTH 00002
-#define S_IXOTH 00001
-#define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
-#define S_ISUID 0004000
-#define S_ISGID 0002000
-#define S_ISVTX 0001000
-
-#else
-
-#include <selinux/selinux.h>
-#include <selinux/label.h>
-#include <selinux/android.h>
+#ifndef USE_MINGW
 
 #define O_BINARY 0
 
@@ -79,8 +52,7 @@ static int filter_dot(const struct dirent *d)
 	return (strcmp(d->d_name, "..") && strcmp(d->d_name, "."));
 }
 
-static u32 build_default_directory_structure(const char *dir_path,
-					     struct selabel_handle *sehnd)
+static u32 build_default_directory_structure(const char *dir_path)
 {
 	u32 inode;
 	u32 root_inode;
@@ -98,22 +70,6 @@ static u32 build_default_directory_structure(const char *dir_path,
 	inode_set_permissions(inode, dentries.mode,
 		dentries.uid, dentries.gid, dentries.mtime);
 
-#ifndef USE_MINGW
-	if (sehnd) {
-		char *path = NULL;
-		char *secontext = NULL;
-
-		asprintf(&path, "%slost+found", dir_path);
-		if (selabel_lookup(sehnd, &secontext, path, S_IFDIR) < 0) {
-			error("cannot lookup security context for %s", path);
-		} else {
-			inode_set_selinux(inode, secontext);
-			freecon(secontext);
-		}
-		free(path);
-	}
-#endif
-
 	return root_inode;
 }
 
@@ -127,7 +83,7 @@ static u32 build_default_directory_structure(const char *dir_path,
    if the image were mounted at the specified mount point */
 static u32 build_directory_structure(const char *full_path, const char *dir_path,
 		u32 dir_inode, fs_config_func_t fs_config_func,
-		struct selabel_handle *sehnd, int verbose, time_t fixed_time)
+		int verbose, time_t fixed_time)
 {
 	int entries = 0;
 	struct dentry *dentries;
@@ -212,16 +168,6 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 			error("can't set android permissions - built without android support");
 #endif
 		}
-#ifndef USE_MINGW
-		if (sehnd) {
-			if (selabel_lookup(sehnd, &dentries[i].secon, dentries[i].path, stat.st_mode) < 0) {
-				error("cannot lookup security context for %s", dentries[i].path);
-			}
-
-			if (dentries[i].secon && verbose)
-				printf("Labeling %s as %s\n", dentries[i].path, dentries[i].secon);
-		}
-#endif
 
 		if (S_ISREG(stat.st_mode)) {
 			dentries[i].file_type = EXT4_FT_REG_FILE;
@@ -263,10 +209,6 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 		dentries[0].file_type = EXT4_FT_DIR;
 		dentries[0].uid = 0;
 		dentries[0].gid = 0;
-		if (sehnd) {
-			if (selabel_lookup(sehnd, &dentries[0].secon, dentries[0].path, dentries[0].mode) < 0)
-				error("cannot lookup security context for %s", dentries[0].path);
-		}
 		entries++;
 		dirs++;
 	}
@@ -288,7 +230,7 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 			if (ret < 0)
 				critical_error_errno("asprintf");
 			entry_inode = build_directory_structure(subdir_full_path,
-					subdir_dir_path, inode, fs_config_func, sehnd, verbose, fixed_time);
+					subdir_dir_path, inode, fs_config_func, verbose, fixed_time);
 			free(subdir_full_path);
 			free(subdir_dir_path);
 		} else if (dentries[i].file_type == EXT4_FT_SYMLINK) {
@@ -401,16 +343,16 @@ void reset_ext4fs_info() {
 }
 
 int make_ext4fs_sparse_fd(int fd, long long len,
-				const char *mountpoint, struct selabel_handle *sehnd)
+				const char *mountpoint)
 {
 	reset_ext4fs_info();
 	info.len = len;
 
-	return make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 1, 0, 0, sehnd, 0, -1, NULL);
+	return make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 1, 0, 0, 0, -1, NULL);
 }
 
 int make_ext4fs(const char *filename, long long len,
-				const char *mountpoint, struct selabel_handle *sehnd)
+				const char *mountpoint)
 {
 	int fd;
 	int status;
@@ -424,7 +366,7 @@ int make_ext4fs(const char *filename, long long len,
 		return EXIT_FAILURE;
 	}
 
-	status = make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 0, 0, 1, sehnd, 0, -1, NULL);
+	status = make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 0, 0, 1, 0, -1, NULL);
 	close(fd);
 
 	return status;
@@ -493,7 +435,7 @@ static char *canonicalize_rel_slashes(const char *str)
 int make_ext4fs_internal(int fd, const char *_directory,
 						 const char *_mountpoint, fs_config_func_t fs_config_func, int gzip,
 						 int sparse, int crc, int wipe,
-						 struct selabel_handle *sehnd, int verbose, time_t fixed_time,
+						 int verbose, time_t fixed_time,
 						 FILE* block_list_file)
 {
 	u32 root_inode_num;
@@ -599,34 +541,17 @@ int make_ext4fs_internal(int fd, const char *_directory,
 #ifdef USE_MINGW
 	// Windows needs only 'create an empty fs image' functionality
 	assert(!directory);
-	root_inode_num = build_default_directory_structure(mountpoint, sehnd);
+	root_inode_num = build_default_directory_structure(mountpoint);
 #else
 	if (directory)
 		root_inode_num = build_directory_structure(directory, mountpoint, 0,
-			fs_config_func, sehnd, verbose, fixed_time);
+			fs_config_func, verbose, fixed_time);
 	else
-		root_inode_num = build_default_directory_structure(mountpoint, sehnd);
+		root_inode_num = build_default_directory_structure(mountpoint);
 #endif
 
 	root_mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 	inode_set_permissions(root_inode_num, root_mode, 0, 0, 0);
-
-#ifndef USE_MINGW
-	if (sehnd) {
-		char *secontext = NULL;
-
-		if (selabel_lookup(sehnd, &secontext, mountpoint, S_IFDIR) < 0) {
-			error("cannot lookup security context for %s", mountpoint);
-		}
-		if (secontext) {
-			if (verbose) {
-				printf("Labeling %s as %s\n", mountpoint, secontext);
-			}
-			inode_set_selinux(root_inode_num, secontext);
-		}
-		freecon(secontext);
-	}
-#endif
 
 	ext4_update_free();
 

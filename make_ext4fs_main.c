@@ -29,14 +29,6 @@
 #include <private/android_filesystem_config.h>
 #endif
 
-#ifndef USE_MINGW
-#include <selinux/selinux.h>
-#include <selinux/label.h>
-#include <selinux/android.h>
-#else
-struct selabel_handle;
-#endif
-
 #include "make_ext4fs.h"
 #include "ext4_utils.h"
 #include "canned_fs_config.h"
@@ -74,13 +66,9 @@ int main(int argc, char **argv)
 	int exitcode;
 	int verbose = 0;
 	time_t fixed_time = -1;
-	struct selabel_handle *sehnd = NULL;
 	FILE* block_list_file = NULL;
-#ifndef USE_MINGW
-	struct selinux_opt seopts[] = { { SELABEL_OPT_PATH, "" } };
-#endif
 
-	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:a:S:T:C:B:fwzJsctv")) != -1) {
+	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:a:T:C:B:fwzJsctv")) != -1) {
 		switch (opt) {
 		case 'l':
 			info.len = parse_num(optarg);
@@ -133,16 +121,6 @@ int main(int argc, char **argv)
 		case 't':
 			fprintf(stderr, "Warning: -t (initialize inode tables) is deprecated\n");
 			break;
-		case 'S':
-#ifndef USE_MINGW
-			seopts[0].value = optarg;
-			sehnd = selabel_open(SELABEL_CTX_FILE, seopts, 1);
-			if (!sehnd) {
-				perror(optarg);
-				exit(EXIT_FAILURE);
-			}
-#endif
-			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -165,26 +143,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-#if !defined(HOST)
-	// Use only if -S option not requested
-	if (!sehnd && mountpoint) {
-		sehnd = selinux_android_file_context_handle();
-
-		if (!sehnd) {
-			perror(optarg);
-			exit(EXIT_FAILURE);
-		}
-	}
-#endif
-
 	if (fs_config_file) {
 		if (load_canned_fs_config(fs_config_file) < 0) {
 			fprintf(stderr, "failed to load %s\n", fs_config_file);
 			exit(EXIT_FAILURE);
 		}
 		fs_config_func = canned_fs_config;
-	} else if (mountpoint) {
-		fs_config_func = fs_config;
 	}
 
 	if (wipe && sparse) {
@@ -227,7 +191,7 @@ int main(int argc, char **argv)
 	}
 
 	exitcode = make_ext4fs_internal(fd, directory, mountpoint, fs_config_func, gzip,
-		sparse, crc, wipe, sehnd, verbose, fixed_time, block_list_file);
+		sparse, crc, wipe, verbose, fixed_time, block_list_file);
 	close(fd);
 	if (block_list_file)
 		fclose(block_list_file);
