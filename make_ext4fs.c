@@ -35,12 +35,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifndef USE_MINGW
-
-#define O_BINARY 0
-
-#endif
-
 /* TODO: Not implemented:
    Allocating blocks in the same block group as the file inode
    Hash or binary tree directories
@@ -364,7 +358,7 @@ int make_ext4fs(const char *filename, long long len,
 	reset_ext4fs_info();
 	info.len = len;
 
-	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
+	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0) {
 		error_errno("open");
 		return EXIT_FAILURE;

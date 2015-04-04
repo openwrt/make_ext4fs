@@ -33,10 +33,6 @@
 #include "ext4_utils.h"
 #include "canned_fs_config.h"
 
-#ifndef USE_MINGW /* O_BINARY is windows-specific flag */
-#define O_BINARY 0
-#endif
-
 extern struct fs_info info;
 
 
@@ -181,7 +177,7 @@ int main(int argc, char **argv)
 	}
 
 	if (strcmp(filename, "-")) {
-		fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
+		fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		if (fd < 0) {
 			perror("open");
 			return EXIT_FAILURE;

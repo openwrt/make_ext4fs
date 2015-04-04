@@ -24,6 +24,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -33,13 +34,6 @@
 #include "output_file.h"
 #include "sparse_crc32.h"
 #include "sparse_format.h"
-
-#ifndef USE_MINGW
-#include <sys/mman.h>
-#define O_BINARY 0
-#else
-#define ftruncate64 ftruncate
-#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define lseek64 lseek
@@ -748,7 +742,7 @@ int write_file_chunk(struct output_file *out, unsigned int len,
 {
 	int ret;
 
-	int file_fd = open(file, O_RDONLY | O_BINARY);
+	int file_fd = open(file, O_RDONLY);
 	if (file_fd < 0) {
 		return -errno;
 	}
