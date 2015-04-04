@@ -20,7 +20,7 @@
 #include <inttypes.h>
 
 int load_canned_fs_config(const char* fn);
-void canned_fs_config(const char* path, int dir,
-                      unsigned* uid, unsigned* gid, unsigned* mode, uint64_t* capabilities);
+int canned_fs_config(const char* path, int dir,
+                     unsigned* uid, unsigned* gid, unsigned* mode, uint64_t* capabilities);
 
 #endif

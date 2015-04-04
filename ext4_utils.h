@@ -150,7 +150,7 @@ u64 parse_num(const char *arg);
 void ext4_parse_sb_info(struct ext4_super_block *sb);
 u16 ext4_crc16(u16 crc_in, const void *buf, int size);
 
-typedef void (*fs_config_func_t)(const char *path, int dir, unsigned *uid, unsigned *gid,
+typedef int (*fs_config_func_t)(const char *path, int dir, unsigned *uid, unsigned *gid,
 		unsigned *mode, uint64_t *capabilities);
 
 struct selabel_handle;

@@ -78,14 +78,13 @@ int load_canned_fs_config(const char* fn) {
 	return 0;
 }
 
-void canned_fs_config(const char* path, int dir,
+int canned_fs_config(const char* path, int dir,
 					  unsigned* uid, unsigned* gid, unsigned* mode, uint64_t* capabilities) {
 	Path key;
-	key.path = path+1;   // canned paths lack the leading '/'
+	key.path = path;
 	Path* p = (Path*) bsearch(&key, canned_data, canned_used, sizeof(Path), path_compare);
 	if (p == NULL) {
-		fprintf(stderr, "failed to find [%s] in canned fs_config\n", path);
-		exit(1);
+		return 0;
 	}
 	*uid = p->uid;
 	*gid = p->gid;
@@ -104,4 +103,6 @@ void canned_fs_config(const char* path, int dir,
 	if (c_mode != *mode) printf("%s mode 0%o 0%o\n", path, *mode, c_mode);
 	if (c_capabilities != *capabilities) printf("%s capabilities %llx %llx\n", path, *capabilities, c_capabilities);
 #endif
+
+	return 1;
 }

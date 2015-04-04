@@ -151,11 +151,12 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 			unsigned int uid = 0;
 			unsigned int gid = 0;
 			int dir = S_ISDIR(stat.st_mode);
-			fs_config_func(dentries[i].path, dir, &uid, &gid, &mode, &capabilities);
-			dentries[i].mode = mode;
-			dentries[i].uid = uid;
-			dentries[i].gid = gid;
-			dentries[i].capabilities = capabilities;
+			if (fs_config_func(dentries[i].path, dir, &uid, &gid, &mode, &capabilities)) {
+				dentries[i].mode = mode;
+				dentries[i].uid = uid;
+				dentries[i].gid = gid;
+				dentries[i].capabilities = capabilities;
+			}
 		}
 
 		if (S_ISREG(stat.st_mode)) {
