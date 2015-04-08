@@ -24,7 +24,6 @@
 #define XATTR_CAPS_SUFFIX "capability"
 
 #include "ext4_utils.h"
-#include "make_ext4fs.h"
 #include "allocate.h"
 #include "contents.h"
 #include "extent.h"

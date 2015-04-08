@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "make_ext4fs.h"
 #include "ext4_utils.h"
 #include "allocate.h"
 #include "contents.h"
@@ -310,48 +309,6 @@ static u32 compute_bg_desc_reserve_blocks()
 		bg_desc_reserve_blocks = info.block_size / sizeof(u32);
 
 	return bg_desc_reserve_blocks;
-}
-
-void reset_ext4fs_info() {
-	// Reset all the global data structures used by make_ext4fs so it
-	// can be called again.
-	memset(&info, 0, sizeof(info));
-	memset(&aux_info, 0, sizeof(aux_info));
-
-	if (ext4_sparse_file) {
-		sparse_file_destroy(ext4_sparse_file);
-		ext4_sparse_file = NULL;
-	}
-}
-
-int make_ext4fs_sparse_fd(int fd, long long len,
-				const char *mountpoint)
-{
-	reset_ext4fs_info();
-	info.len = len;
-
-	return make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 1, 0, 0, 0, -1, NULL);
-}
-
-int make_ext4fs(const char *filename, long long len,
-				const char *mountpoint)
-{
-	int fd;
-	int status;
-
-	reset_ext4fs_info();
-	info.len = len;
-
-	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (fd < 0) {
-		error_errno("open");
-		return EXIT_FAILURE;
-	}
-
-	status = make_ext4fs_internal(fd, NULL, mountpoint, NULL, 0, 0, 0, 1, 0, -1, NULL);
-	close(fd);
-
-	return status;
 }
 
 /* return a newly-malloc'd string that is a copy of str.  The new string

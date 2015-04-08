@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "ext4_utils.h"
-#include "make_ext4fs.h"
 #include "ext4_extents.h"
 #include "allocate.h"
 #include "ext4fixup.h"

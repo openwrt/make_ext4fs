@@ -25,7 +25,6 @@
 #include <sys/disk.h>
 #endif
 
-#include "make_ext4fs.h"
 #include "ext4_utils.h"
 #include "canned_fs_config.h"
 
