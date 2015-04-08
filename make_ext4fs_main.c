@@ -35,7 +35,7 @@ static void usage(char *path)
 {
 	fprintf(stderr, "%s [ -l <len> ] [ -j <journal size> ] [ -b <block_size> ]\n", basename(path));
 	fprintf(stderr, "    [ -g <blocks per group> ] [ -i <inodes> ] [ -I <inode size> ]\n");
-	fprintf(stderr, "    [ -L <label> ] [ -f ]\n");
+	fprintf(stderr, "    [ -m <reserved blocks percent> ] [ -L <label> ] [ -f ]\n");
 	fprintf(stderr, "    [ -S file_contexts ] [ -C fs_config ] [ -T timestamp ]\n");
 	fprintf(stderr, "    [ -z | -s ] [ -w ] [ -c ] [ -J ] [ -v ] [ -B <block_list_file> ]\n");
 	fprintf(stderr, "    <filename> [<directory>]\n");
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 	time_t fixed_time = -1;
 	FILE* block_list_file = NULL;
 
-	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:T:C:B:fwzJsctv")) != -1) {
+	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:T:C:B:m:fwzJsctv")) != -1) {
 		switch (opt) {
 		case 'l':
 			info.len = parse_num(optarg);
@@ -117,6 +117,9 @@ int main(int argc, char **argv)
 				fprintf(stderr, "failed to open block_list_file: %s\n", strerror(errno));
 				exit(EXIT_FAILURE);
 			}
+			break;
+		case 'm':
+			info.reserve_pcnt = strtoul(optarg, NULL, 0);
 			break;
 		default: /* '?' */
 			usage(argv[0]);

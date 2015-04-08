@@ -191,7 +191,7 @@ void ext4_fill_in_sb()
 
 	sb->s_inodes_count = info.inodes_per_group * aux_info.groups;
 	sb->s_blocks_count_lo = aux_info.len_blocks;
-	sb->s_r_blocks_count_lo = 0;
+	sb->s_r_blocks_count_lo = (aux_info.len_blocks / 100) * info.reserve_pcnt;
 	sb->s_free_blocks_count_lo = 0;
 	sb->s_free_inodes_count = 0;
 	sb->s_first_data_block = aux_info.first_data_block;
@@ -533,4 +533,3 @@ int read_ext(int fd, int verbose)
 
 	return 0;
 }
-

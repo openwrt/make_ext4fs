@@ -39,6 +39,7 @@ struct fs_info {
 	uint16_t feat_compat;
 	uint16_t feat_incompat;
 	uint32_t bg_desc_reserve_blocks;
+	uint32_t reserve_pcnt;
 	const char *label;
 	uint8_t no_journal;
 };
