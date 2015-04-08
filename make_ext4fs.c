@@ -372,28 +372,24 @@ static char *canonicalize_rel_slashes(const char *str)
 }
 
 int make_ext4fs_internal(int fd, const char *_directory,
-						 const char *_mountpoint, fs_config_func_t fs_config_func, int gzip,
+						 fs_config_func_t fs_config_func, int gzip,
 						 int sparse, int crc, int wipe,
 						 int verbose, time_t fixed_time,
 						 FILE* block_list_file)
 {
 	u32 root_inode_num;
 	u16 root_mode;
-	char *mountpoint;
 	char *directory = NULL;
 
 	if (setjmp(setjmp_env))
 		return EXIT_FAILURE; /* Handle a call to longjmp() */
 
-	if (_mountpoint == NULL) {
-		mountpoint = strdup("");
-	} else {
-		mountpoint = canonicalize_abs_slashes(_mountpoint);
+	if (_directory == NULL) {
+		fprintf(stderr, "Need a source directory\n");
+		return EXIT_FAILURE;
 	}
 
-	if (_directory) {
-		directory = canonicalize_rel_slashes(_directory);
-	}
+	directory = canonicalize_rel_slashes(_directory);
 
 	if (info.len <= 0)
 		info.len = get_file_size(fd);
@@ -477,11 +473,8 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	if (info.feat_compat & EXT4_FEATURE_COMPAT_RESIZE_INODE)
 		ext4_create_resize_inode();
 
-	if (directory)
-		root_inode_num = build_directory_structure(directory, mountpoint, 0,
-			fs_config_func, verbose, fixed_time);
-	else
-		root_inode_num = build_default_directory_structure(mountpoint);
+	root_inode_num = build_directory_structure(directory, "", 0,
+		fs_config_func, verbose, fixed_time);
 
 	root_mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 	inode_set_permissions(root_inode_num, root_mode, 0, 0, 0);
@@ -491,12 +484,11 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	ext4_queue_sb();
 
 	if (block_list_file) {
-		size_t dirlen = directory ? strlen(directory) : 0;
+		size_t dirlen = strlen(directory);
 		struct block_allocation* p = get_saved_allocation_chain();
 		while (p) {
-			if (directory && strncmp(p->filename, directory, dirlen) == 0) {
-				// substitute mountpoint for the leading directory in the filename, in the output file
-				fprintf(block_list_file, "%s%s", mountpoint, p->filename + dirlen);
+			if (strncmp(p->filename, directory, dirlen) == 0) {
+				fprintf(block_list_file, "%s", p->filename + dirlen);
 			} else {
 				fprintf(block_list_file, "%s", p->filename);
 			}
@@ -522,7 +514,6 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	sparse_file_destroy(ext4_sparse_file);
 	ext4_sparse_file = NULL;
 
-	free(mountpoint);
 	free(directory);
 
 	return 0;

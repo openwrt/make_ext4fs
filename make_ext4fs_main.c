@@ -35,7 +35,7 @@ static void usage(char *path)
 {
 	fprintf(stderr, "%s [ -l <len> ] [ -j <journal size> ] [ -b <block_size> ]\n", basename(path));
 	fprintf(stderr, "    [ -g <blocks per group> ] [ -i <inodes> ] [ -I <inode size> ]\n");
-	fprintf(stderr, "    [ -L <label> ] [ -f ] [ -a <android mountpoint> ]\n");
+	fprintf(stderr, "    [ -L <label> ] [ -f ]\n");
 	fprintf(stderr, "    [ -S file_contexts ] [ -C fs_config ] [ -T timestamp ]\n");
 	fprintf(stderr, "    [ -z | -s ] [ -w ] [ -c ] [ -J ] [ -v ] [ -B <block_list_file> ]\n");
 	fprintf(stderr, "    <filename> [<directory>]\n");
@@ -46,7 +46,6 @@ int main(int argc, char **argv)
 	int opt;
 	const char *filename = NULL;
 	const char *directory = NULL;
-	char *mountpoint = NULL;
 	fs_config_func_t fs_config_func = NULL;
 	const char *fs_config_file = NULL;
 	int gzip = 0;
@@ -172,7 +171,7 @@ int main(int argc, char **argv)
 		fd = STDOUT_FILENO;
 	}
 
-	exitcode = make_ext4fs_internal(fd, directory, mountpoint, fs_config_func, gzip,
+	exitcode = make_ext4fs_internal(fd, directory, fs_config_func, gzip,
 		sparse, crc, wipe, verbose, fixed_time, block_list_file);
 	close(fd);
 	if (block_list_file)
