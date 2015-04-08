@@ -66,7 +66,6 @@ static u32 build_default_directory_structure(const char *dir_path)
 	return root_inode;
 }
 
-#ifndef USE_MINGW
 /* Read a local directory and create the same tree in the generated filesystem.
    Calls itself recursively with each directory in the given directory.
    full_path is an absolute or relative path, with a trailing slash, to the
@@ -255,7 +254,6 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 	free(dentries);
 	return inode;
 }
-#endif
 
 static u32 compute_block_size()
 {
@@ -522,17 +520,11 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	if (info.feat_compat & EXT4_FEATURE_COMPAT_RESIZE_INODE)
 		ext4_create_resize_inode();
 
-#ifdef USE_MINGW
-	// Windows needs only 'create an empty fs image' functionality
-	assert(!directory);
-	root_inode_num = build_default_directory_structure(mountpoint);
-#else
 	if (directory)
 		root_inode_num = build_directory_structure(directory, mountpoint, 0,
 			fs_config_func, verbose, fixed_time);
 	else
 		root_inode_num = build_default_directory_structure(mountpoint);
-#endif
 
 	root_mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 	inode_set_permissions(root_inode_num, root_mode, 0, 0, 0);

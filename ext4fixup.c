@@ -24,12 +24,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#ifndef USE_MINGW
-#include <sys/mman.h>
-#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define lseek64 lseek

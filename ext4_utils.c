@@ -29,12 +29,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#ifdef USE_MINGW
-#include <winsock2.h>
-#else
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
-#endif
 
 #if defined(__linux__)
 #include <linux/fs.h>
@@ -443,16 +439,12 @@ u64 get_block_device_size(int fd)
 
 int is_block_device_fd(int fd)
 {
-#ifdef USE_MINGW
-	return 0;
-#else
 	struct stat st;
 	int ret = fstat(fd, &st);
 	if (ret < 0)
 		return 0;
 
 	return S_ISBLK(st.st_mode);
-#endif
 }
 
 u64 get_file_size(int fd)

@@ -699,39 +699,16 @@ int write_fd_chunk(struct output_file *out, unsigned int len,
 	aligned_diff = offset - aligned_offset;
 	buffer_size = len + aligned_diff;
 
-#ifndef USE_MINGW
 	char *data = mmap64(NULL, buffer_size, PROT_READ, MAP_SHARED, fd,
 			aligned_offset);
 	if (data == MAP_FAILED) {
 		return -errno;
 	}
 	ptr = data + aligned_diff;
-#else
-	off64_t pos;
-	char *data = malloc(len);
-	if (!data) {
-		return -errno;
-	}
-	pos = lseek64(fd, offset, SEEK_SET);
-	if (pos < 0) {
-                free(data);
-		return -errno;
-	}
-	ret = read_all(fd, data, len);
-	if (ret < 0) {
-                free(data);
-		return ret;
-	}
-	ptr = data;
-#endif
 
 	ret = out->sparse_ops->write_data_chunk(out, len, ptr);
 
-#ifndef USE_MINGW
 	munmap(data, buffer_size);
-#else
-	free(data);
-#endif
 
 	return ret;
 }

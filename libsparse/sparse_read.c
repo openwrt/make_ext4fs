@@ -78,12 +78,9 @@ static void verbose_error(bool verbose, int err, const char *fmt, ...)
 		s = " at ";
 	}
 	if (verbose) {
-#ifndef USE_MINGW
 		if (err == -EOVERFLOW) {
 			sparse_print_verbose("EOF while reading file%s%s\n", s, at);
-		} else
-#endif
-		if (err == -EINVAL) {
+		} else if (err == -EINVAL) {
 			sparse_print_verbose("Invalid sparse file format%s%s\n", s, at);
 		} else if (err == -ENOMEM) {
 			sparse_print_verbose("Failed allocation while reading file%s%s\n",
