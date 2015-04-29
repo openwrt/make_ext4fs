@@ -10,7 +10,6 @@
 #define	_SYS_SHA1_H_
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <stdint.h>
 
 #define SHA1_DIGEST_LENGTH		20
@@ -22,11 +21,15 @@ typedef struct {
 	u_char buffer[64];
 } SHA1_CTX;
 
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 void	SHA1Transform(uint32_t[5], const u_char[64]);
 void	SHA1Init(SHA1_CTX *);
 void	SHA1Update(SHA1_CTX *, const u_char *, u_int);
 void	SHA1Final(u_char[SHA1_DIGEST_LENGTH], SHA1_CTX *);
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYS_SHA1_H_ */

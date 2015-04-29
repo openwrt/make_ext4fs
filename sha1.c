@@ -17,7 +17,6 @@
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
