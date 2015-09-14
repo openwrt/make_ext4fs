@@ -1,6 +1,12 @@
 CC ?= gcc
 CFLAGS += -Iinclude -Ilibsparse/include
 
+ifeq ($(STATIC),1)
+  ZLIB := -Wl,-Bstatic -lz -Wl,-Bdynamic
+else
+  ZLIB := -lz
+endif
+
 OBJ := \
     allocate.o \
 	canned_fs_config.o \
@@ -21,7 +27,7 @@ OBJ := \
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 make_ext4fs: $(OBJ) libsparse/libsparse.a
-	$(CC) -o $@ $^ -lz
+	$(CC) -o $@ $^ $(ZLIB)
 
 libsparse/libsparse.a:
 	$(MAKE) -C libsparse/ libsparse.a
