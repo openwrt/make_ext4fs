@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <locale.h>
 
 /* TODO: Not implemented:
    Allocating blocks in the same block group as the file inode
@@ -65,6 +66,9 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 	u32 entry_inode;
 	u32 dirs = 0;
 	bool needs_lost_and_found = false;
+
+	/* alphasort is locale-dependent; let's fix the locale to some sane value */
+	setlocale(LC_COLLATE, "C");
 
 	if (full_path) {
 		entries = scandir(full_path, &namelist, filter_dot, (void*)alphasort);
