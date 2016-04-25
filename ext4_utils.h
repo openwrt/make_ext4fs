@@ -27,9 +27,8 @@ extern "C" {
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
-
-#include <sys/types.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
