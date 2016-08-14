@@ -45,6 +45,27 @@ static int filter_dot(const struct dirent *d)
 	return (strcmp(d->d_name, "..") && strcmp(d->d_name, "."));
 }
 
+static u32 build_default_directory_structure(time_t fixed_time)
+{
+	u32 inode;
+	u32 root_inode;
+	struct dentry dentries = {
+		.filename = "lost+found",
+		.file_type = EXT4_FT_DIR,
+		.mode = S_IRWXU,
+		.uid = 0,
+		.gid = 0,
+		.mtime = (fixed_time != -1) ? fixed_time : 0,
+	};
+	root_inode = make_directory(0, 1, &dentries, 1);
+	inode = make_directory(root_inode, 0, NULL, 0);
+	*dentries.inode = inode;
+	inode_set_permissions(inode, dentries.mode,
+	        dentries.uid, dentries.gid, dentries.mtime);
+
+	return root_inode;
+}
+
 /* Read a local directory and create the same tree in the generated filesystem.
    Calls itself recursively with each directory in the given directory.
    full_path is an absolute or relative path, with a trailing slash, to the
@@ -367,12 +388,8 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	if (setjmp(setjmp_env))
 		return EXIT_FAILURE; /* Handle a call to longjmp() */
 
-	if (_directory == NULL) {
-		fprintf(stderr, "Need a source directory\n");
-		return EXIT_FAILURE;
-	}
-
-	directory = canonicalize_rel_slashes(_directory);
+	if (_directory)
+		directory = canonicalize_rel_slashes(_directory);
 
 	if (info.len <= 0)
 		info.len = get_file_size(fd);
@@ -457,11 +474,15 @@ int make_ext4fs_internal(int fd, const char *_directory,
 	if (info.feat_compat & EXT4_FEATURE_COMPAT_RESIZE_INODE)
 		ext4_create_resize_inode();
 
-	root_inode_num = build_directory_structure(directory, "", 0,
-		fs_config_func, verbose, fixed_time);
+	if (directory)
+		root_inode_num = build_directory_structure(directory, "", 0,
+			fs_config_func, verbose, fixed_time);
+	else
+		root_inode_num = build_default_directory_structure(fixed_time);
 
 	root_mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-	inode_set_permissions(root_inode_num, root_mode, 0, 0, 0);
+	inode_set_permissions(root_inode_num, root_mode, 0, 0,
+		(fixed_time != 1) ? fixed_time : 0);
 
 	ext4_update_free();
 
