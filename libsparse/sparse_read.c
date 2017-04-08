@@ -35,11 +35,6 @@
 #include "sparse_file.h"
 #include "sparse_format.h"
 
-#if defined(__APPLE__) && defined(__MACH__)
-#define lseek64 lseek
-#define off64_t off_t
-#endif
-
 #define SPARSE_HEADER_MAJOR_VER 1
 #define SPARSE_HEADER_LEN       (sizeof(sparse_header_t))
 #define CHUNK_HEADER_LEN (sizeof(chunk_header_t))
@@ -126,7 +121,7 @@ static int process_raw_chunk(struct sparse_file *s, unsigned int chunk_size,
 			len -= chunk;
 		}
 	} else {
-		lseek64(fd, len, SEEK_CUR);
+		lseek(fd, len, SEEK_CUR);
 	}
 
 	return 0;
@@ -216,7 +211,7 @@ static int process_crc32_chunk(int fd, unsigned int chunk_size, uint32_t crc32)
 	return 0;
 }
 
-static int process_chunk(struct sparse_file *s, int fd, off64_t offset,
+static int process_chunk(struct sparse_file *s, int fd, off_t offset,
 		unsigned int chunk_hdr_sz, chunk_header_t *chunk_header,
 		unsigned int cur_block, uint32_t *crc_ptr)
 {
@@ -277,7 +272,7 @@ static int sparse_file_read_sparse(struct sparse_file *s, int fd, bool crc)
 	uint32_t crc32 = 0;
 	uint32_t *crc_ptr = 0;
 	unsigned int cur_block = 0;
-	off64_t offset;
+	off_t offset;
 
 	if (!copybuf) {
 		copybuf = malloc(COPY_BUF_SIZE);
@@ -316,7 +311,7 @@ static int sparse_file_read_sparse(struct sparse_file *s, int fd, bool crc)
 		/* Skip the remaining bytes in a header that is longer than
 		 * we expected.
 		 */
-		lseek64(fd, sparse_header.file_hdr_sz - SPARSE_HEADER_LEN, SEEK_CUR);
+		lseek(fd, sparse_header.file_hdr_sz - SPARSE_HEADER_LEN, SEEK_CUR);
 	}
 
 	for (i = 0; i < sparse_header.total_chunks; i++) {
@@ -329,10 +324,10 @@ static int sparse_file_read_sparse(struct sparse_file *s, int fd, bool crc)
 			/* Skip the remaining bytes in a header that is longer than
 			 * we expected.
 			 */
-			lseek64(fd, sparse_header.chunk_hdr_sz - CHUNK_HEADER_LEN, SEEK_CUR);
+			lseek(fd, sparse_header.chunk_hdr_sz - CHUNK_HEADER_LEN, SEEK_CUR);
 		}
 
-		offset = lseek64(fd, 0, SEEK_CUR);
+		offset = lseek(fd, 0, SEEK_CUR);
 
 		ret = process_chunk(s, fd, offset, sparse_header.chunk_hdr_sz, &chunk_header,
 				cur_block, crc_ptr);
@@ -451,7 +446,7 @@ struct sparse_file *sparse_file_import(int fd, bool verbose, bool crc)
 		return NULL;
 	}
 
-	ret = lseek64(fd, 0, SEEK_SET);
+	ret = lseek(fd, 0, SEEK_SET);
 	if (ret < 0) {
 		verbose_error(verbose, ret, "seeking");
 		sparse_file_destroy(s);
@@ -480,12 +475,12 @@ struct sparse_file *sparse_file_import_auto(int fd, bool crc, bool verbose)
 		return s;
 	}
 
-	len = lseek64(fd, 0, SEEK_END);
+	len = lseek(fd, 0, SEEK_END);
 	if (len < 0) {
 		return NULL;
 	}
 
-	lseek64(fd, 0, SEEK_SET);
+	lseek(fd, 0, SEEK_SET);
 
 	s = sparse_file_new(4096, len);
 	if (!s) {

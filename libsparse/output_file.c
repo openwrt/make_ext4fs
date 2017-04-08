@@ -35,13 +35,6 @@
 #include "sparse_crc32.h"
 #include "sparse_format.h"
 
-#if defined(__APPLE__) && defined(__MACH__)
-#define lseek64 lseek
-#define ftruncate64 ftruncate
-#define mmap64 mmap
-#define off64_t off_t
-#endif
-
 #define min(a, b) \
 	({ typeof(a) _a = (a); typeof(b) _b = (b); (_a < _b) ? _a : _b; })
 
@@ -119,12 +112,12 @@ static int file_open(struct output_file *out, int fd)
 
 static int file_skip(struct output_file *out, int64_t cnt)
 {
-	off64_t ret;
+	off_t ret;
 	struct output_file_normal *outn = to_output_file_normal(out);
 
-	ret = lseek64(outn->fd, cnt, SEEK_CUR);
+	ret = lseek(outn->fd, cnt, SEEK_CUR);
 	if (ret < 0) {
-		error_errno("lseek64");
+		error_errno("lseek");
 		return -1;
 	}
 	return 0;
@@ -135,7 +128,7 @@ static int file_pad(struct output_file *out, int64_t len)
 	int ret;
 	struct output_file_normal *outn = to_output_file_normal(out);
 
-	ret = ftruncate64(outn->fd, len);
+	ret = ftruncate(outn->fd, len);
 	if (ret < 0) {
 		return -errno;
 	}
@@ -191,7 +184,7 @@ static int gz_file_open(struct output_file *out, int fd)
 
 static int gz_file_skip(struct output_file *out, int64_t cnt)
 {
-	off64_t ret;
+	off_t ret;
 	struct output_file_gz *outgz = to_output_file_gz(out);
 
 	ret = gzseek(outgz->gz_fd, cnt, SEEK_CUR);
@@ -204,7 +197,7 @@ static int gz_file_skip(struct output_file *out, int64_t cnt)
 
 static int gz_file_pad(struct output_file *out, int64_t len)
 {
-	off64_t ret;
+	off_t ret;
 	struct output_file_gz *outgz = to_output_file_gz(out);
 
 	ret = gztell(outgz->gz_fd);
@@ -699,7 +692,7 @@ int write_fd_chunk(struct output_file *out, unsigned int len,
 	aligned_diff = offset - aligned_offset;
 	buffer_size = len + aligned_diff;
 
-	char *data = mmap64(NULL, buffer_size, PROT_READ, MAP_SHARED, fd,
+	char *data = mmap(NULL, buffer_size, PROT_READ, MAP_SHARED, fd,
 			aligned_offset);
 	if (data == MAP_FAILED) {
 		return -errno;

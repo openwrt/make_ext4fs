@@ -41,13 +41,6 @@ extern "C" {
 #include <setjmp.h>
 #include <stdint.h>
 
-#if defined(__APPLE__) && defined(__MACH__)
-#define lseek64 lseek
-#define ftruncate64 ftruncate
-#define mmap64 mmap
-#define off64_t off_t
-#endif
-
 #include "ext4_sb.h"
 
 extern int force;

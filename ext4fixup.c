@@ -27,11 +27,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#if defined(__APPLE__) && defined(__MACH__)
-#define lseek64 lseek
-#define off64_t off_t
-#endif
-
 /* The inode block count for a file/directory is in units of 512 byte blocks,
  * _NOT_ the filesystem block size!
  */
@@ -88,7 +83,7 @@ static int get_fs_fixup_state(int fd)
         return no_write_fixup_state;
     }
 
-    lseek64(fd, 0, SEEK_SET);
+    lseek(fd, 0, SEEK_SET);
     len = read(fd, &magic, sizeof(magic));
     if (len != sizeof(magic)) {
         critical_error("cannot read fixup_state\n");
@@ -137,7 +132,7 @@ static int set_fs_fixup_state(int fd, int state)
             break;
     }
 
-    lseek64(fd, 0, SEEK_SET);
+    lseek(fd, 0, SEEK_SET);
     len = write(fd, &magic, sizeof(magic));
     if (len != sizeof(magic)) {
         critical_error("cannot write fixup_state\n");
@@ -162,7 +157,7 @@ static int set_fs_fixup_state(int fd, int state)
 static int read_inode(int fd, unsigned int inum, struct ext4_inode *inode)
 {
     unsigned int bg_num, bg_offset;
-    off64_t inode_offset;
+    off_t inode_offset;
     int len;
 
     bg_num = (inum-1) / info.inodes_per_group;
@@ -171,7 +166,7 @@ static int read_inode(int fd, unsigned int inum, struct ext4_inode *inode)
     inode_offset = ((unsigned long long)aux_info.bg_desc[bg_num].bg_inode_table * info.block_size) +
                     (bg_offset * info.inode_size);
 
-    if (lseek64(fd, inode_offset, SEEK_SET) < 0) {
+    if (lseek(fd, inode_offset, SEEK_SET) < 0) {
         critical_error_errno("failed to seek to inode %d\n", inum);
     }
 
@@ -185,12 +180,12 @@ static int read_inode(int fd, unsigned int inum, struct ext4_inode *inode)
 
 static int read_block(int fd, unsigned long long block_num, void *block)
 {
-    off64_t off;
+    off_t off;
     unsigned int len;
 
     off = block_num * info.block_size;
 
-    if (lseek64(fd, off, SEEK_SET) , 0) {
+    if (lseek(fd, off, SEEK_SET) , 0) {
         critical_error_errno("failed to seek to block %lld\n", block_num);
     }
 
@@ -204,7 +199,7 @@ static int read_block(int fd, unsigned long long block_num, void *block)
 
 static int write_block(int fd, unsigned long long block_num, void *block)
 {
-    off64_t off;
+    off_t off;
     unsigned int len;
 
     if (no_write) {
@@ -213,7 +208,7 @@ static int write_block(int fd, unsigned long long block_num, void *block)
 
     off = block_num * info.block_size;
 
-    if (lseek64(fd, off, SEEK_SET) < 0) {
+    if (lseek(fd, off, SEEK_SET) < 0) {
         critical_error_errno("failed to seek to block %lld\n", block_num);
     }
 
@@ -259,7 +254,7 @@ static void check_inode_bitmap(int fd, unsigned int bg_num)
 /* Update the superblock and bgdesc of the specified block group */
 static int update_superblocks_and_bg_desc(int fd, int state)
 {
-    off64_t ret;
+    off_t ret;
     struct ext4_super_block sb;
     unsigned int num_block_groups, total_new_inodes;
     unsigned int i;
@@ -323,7 +318,7 @@ static int update_superblocks_and_bg_desc(int fd, int state)
                          &sb);
             }
 
-            ret = lseek64(fd, ((unsigned long long)i * info.blocks_per_group * info.block_size) +
+            ret = lseek(fd, ((unsigned long long)i * info.blocks_per_group * info.block_size) +
                               (info.block_size * (aux_info.first_data_block + 1)), SEEK_SET);
             if (ret < 0)
                 critical_error_errno("failed to seek to block group descriptors");
@@ -409,7 +404,7 @@ static int get_extent_ents(struct ext4_extent_header *ext_hdr, unsigned long lon
 {
     int i, j;
     struct ext4_extent *extent;
-    off64_t fs_block_num;
+    off_t fs_block_num;
 
     if (ext_hdr->eh_depth != 0) {
         critical_error("get_extent_ents called with eh_depth != 0\n");
@@ -421,7 +416,7 @@ static int get_extent_ents(struct ext4_extent_header *ext_hdr, unsigned long lon
     extent = (struct ext4_extent *)(ext_hdr + 1);
 
     for (i = 0; i < ext_hdr->eh_entries; i++) {
-         fs_block_num = ((off64_t)extent->ee_start_hi << 32) | extent->ee_start_lo;
+         fs_block_num = ((off_t)extent->ee_start_hi << 32) | extent->ee_start_lo;
          for (j = 0; j < extent->ee_len; j++) {
              block_list[extent->ee_block+j] = fs_block_num+j;
          }
@@ -436,7 +431,7 @@ static int get_extent_idx(int fd, struct ext4_extent_header *ext_hdr, unsigned l
     int i;
     struct ext4_extent_idx *extent_idx;
     struct ext4_extent_header *tmp_ext_hdr;
-    off64_t fs_block_num;
+    off_t fs_block_num;
     unsigned char block[MAX_EXT4_BLOCK_SIZE];
 
     /* Sanity check */
@@ -450,7 +445,7 @@ static int get_extent_idx(int fd, struct ext4_extent_header *ext_hdr, unsigned l
     extent_idx = (struct ext4_extent_idx *)(ext_hdr + 1);
 
     for (i = 0; i < ext_hdr->eh_entries; i++) {
-         fs_block_num = ((off64_t)extent_idx->ei_leaf_hi << 32) | extent_idx->ei_leaf_lo;
+         fs_block_num = ((off_t)extent_idx->ei_leaf_hi << 32) | extent_idx->ei_leaf_lo;
          read_block(fd, fs_block_num, block);
          tmp_ext_hdr = (struct ext4_extent_header *)block;
 
