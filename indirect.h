@@ -24,6 +24,6 @@ u8 *inode_allocate_data_indirect(struct ext4_inode *inode, unsigned long len,
 	unsigned long backing_len);
 void inode_attach_resize(struct ext4_inode *inode,
 		struct block_allocation *alloc);
-void free_indirect_blocks();
+void free_indirect_blocks(void);
 
 #endif

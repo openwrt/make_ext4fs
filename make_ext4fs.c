@@ -258,12 +258,12 @@ static u32 build_directory_structure(const char *full_path, const char *dir_path
 	return inode;
 }
 
-static u32 compute_block_size()
+static u32 compute_block_size(void)
 {
 	return 4096;
 }
 
-static u32 compute_journal_blocks()
+static u32 compute_journal_blocks(void)
 {
 	u32 journal_blocks = DIV_ROUND_UP(info.len, info.block_size) / 64;
 	if (journal_blocks < 1024)
@@ -273,17 +273,17 @@ static u32 compute_journal_blocks()
 	return journal_blocks;
 }
 
-static u32 compute_blocks_per_group()
+static u32 compute_blocks_per_group(void)
 {
 	return info.block_size * 8;
 }
 
-static u32 compute_inodes()
+static u32 compute_inodes(void)
 {
 	return DIV_ROUND_UP(info.len, info.block_size) / 4;
 }
 
-static u32 compute_inodes_per_group()
+static u32 compute_inodes_per_group(void)
 {
 	u32 blocks = DIV_ROUND_UP(info.len, info.block_size);
 	u32 block_groups = DIV_ROUND_UP(blocks, info.blocks_per_group);
@@ -298,7 +298,7 @@ static u32 compute_inodes_per_group()
 	return inodes;
 }
 
-static u32 compute_bg_desc_reserve_blocks()
+static u32 compute_bg_desc_reserve_blocks(void)
 {
 	u32 blocks = DIV_ROUND_UP(info.len, info.block_size);
 	u32 block_groups = DIV_ROUND_UP(blocks, info.blocks_per_group);

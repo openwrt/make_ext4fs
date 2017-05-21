@@ -39,6 +39,6 @@ u32 make_link(const char *link);
 u32 make_special(const char *path);
 int inode_set_permissions(u32 inode_num, u16 mode, u16 uid, u16 gid, u32 mtime);
 int inode_set_capabilities(u32 inode_num, uint64_t capabilities);
-struct block_allocation* get_saved_allocation_chain();
+struct block_allocation* get_saved_allocation_chain(void);
 
 #endif

@@ -103,7 +103,7 @@ u32 make_directory(u32 dir_inode_num, u32 entries, struct dentry *dentries,
 	len = blocks * info.block_size;
 
 	if (dir_inode_num) {
-		inode_num = allocate_inode(info);
+		inode_num = allocate_inode();
 	} else {
 		dir_inode_num = EXT4_ROOT_INO;
 		inode_num = EXT4_ROOT_INO;
@@ -171,7 +171,7 @@ u32 make_file(const char *filename, u64 len)
 	struct ext4_inode *inode;
 	u32 inode_num;
 
-	inode_num = allocate_inode(info);
+	inode_num = allocate_inode();
 	if (inode_num == EXT4_ALLOCATE_FAILED) {
 		error("failed to allocate inode\n");
 		return EXT4_ALLOCATE_FAILED;
@@ -206,7 +206,7 @@ u32 make_link(const char *link)
 	u32 inode_num;
 	u32 len = strlen(link);
 
-	inode_num = allocate_inode(info);
+	inode_num = allocate_inode();
 	if (inode_num == EXT4_ALLOCATE_FAILED) {
 		error("failed to allocate inode\n");
 		return EXT4_ALLOCATE_FAILED;
@@ -247,7 +247,7 @@ u32 make_special(const char *path)
 		return EXT4_ALLOCATE_FAILED;
 	}
 
-	inode_num = allocate_inode(info);
+	inode_num = allocate_inode();
 	if (inode_num == EXT4_ALLOCATE_FAILED) {
 		error("failed to allocate inode\n");
 		return EXT4_ALLOCATE_FAILED;
