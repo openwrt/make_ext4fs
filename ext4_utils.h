@@ -28,7 +28,7 @@ extern "C" {
 #define _LARGEFILE64_SOURCE 1
 #include <sys/types.h>
 
-#ifdef __GLIBC__
+#ifndef __APPLE__
 #include <sys/sysmacros.h>
 #endif
 
