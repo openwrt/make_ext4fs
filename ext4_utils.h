@@ -113,6 +113,7 @@ struct fs_aux_info {
 extern struct fs_info info;
 extern struct fs_aux_info aux_info;
 extern struct sparse_file *ext4_sparse_file;
+extern int uuid_user_specified;
 
 extern jmp_buf setjmp_env;
 
@@ -145,6 +146,8 @@ u64 get_file_size(int fd);
 u64 parse_num(const char *arg);
 void ext4_parse_sb_info(struct ext4_super_block *sb);
 u16 ext4_crc16(u16 crc_in, const void *buf, int size);
+uint8_t *parse_uuid(uint8_t bytes[16], const char *str, size_t len);
+char *uuid_bin_to_str(char *buf, size_t buf_size, const uint8_t bytes[16]);
 
 typedef int (*fs_config_func_t)(const char *path, int dir, unsigned *uid, unsigned *gid,
 		unsigned *mode, uint64_t *capabilities);

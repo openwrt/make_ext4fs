@@ -29,13 +29,14 @@
 #include "canned_fs_config.h"
 
 extern struct fs_info info;
+extern int uuid_user_specified;
 
 
 static void usage(char *path)
 {
 	fprintf(stderr, "%s [ -l <len> ] [ -j <journal size> ] [ -b <block_size> ]\n", basename(path));
 	fprintf(stderr, "    [ -g <blocks per group> ] [ -i <inodes> ] [ -I <inode size> ]\n");
-	fprintf(stderr, "    [ -m <reserved blocks percent> ] [ -L <label> ] [ -f ]\n");
+	fprintf(stderr, "    [ -m <reserved blocks percent> ] [ -L <label> ] [ -u <uuid>] [ -f ]\n");
 	fprintf(stderr, "    [ -S file_contexts ] [ -C fs_config ] [ -T timestamp ]\n");
 	fprintf(stderr, "    [ -z | -s ] [ -w ] [ -c ] [ -J ] [ -v ] [ -B <block_list_file> ]\n");
 	fprintf(stderr, "    <filename> [<directory>]\n");
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
 	time_t fixed_time = -1;
 	FILE* block_list_file = NULL;
 
-	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:T:C:B:m:fwzJsctv")) != -1) {
+	while ((opt = getopt(argc, argv, "l:j:b:g:i:I:L:u:T:C:B:m:fwzJsctv")) != -1) {
 		switch (opt) {
 		case 'l':
 			info.len = parse_num(optarg);
@@ -80,6 +81,14 @@ int main(int argc, char **argv)
 			break;
 		case 'L':
 			info.label = optarg;
+			break;
+		case 'u':
+			if (!parse_uuid(info.uuid, optarg, strlen(optarg))) {
+				fprintf(stderr, "failed to parse UUID: '%s'\n",
+					optarg);
+				exit(EXIT_FAILURE);
+			}
+			uuid_user_specified = 1;
 			break;
 		case 'f':
 			force = 1;

@@ -42,6 +42,7 @@ struct fs_info {
 	uint32_t reserve_pcnt;
 	const char *label;
 	uint8_t no_journal;
+	uint8_t uuid[16];
 };
 
 int ext4_parse_sb(struct ext4_super_block *sb, struct fs_info *info);
