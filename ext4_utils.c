@@ -15,13 +15,14 @@
  */
 
 #include "ext4_utils.h"
-#include "uuid.h"
 #include "allocate.h"
 #include "indirect.h"
 #include "extent.h"
 
 #include <sparse/sparse.h>
 
+#include <assert.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <sys/stat.h>
@@ -42,6 +43,7 @@ int force = 0;
 struct fs_info info;
 struct fs_aux_info aux_info;
 struct sparse_file *ext4_sparse_file;
+int uuid_user_specified = 0;
 
 jmp_buf setjmp_env;
 
@@ -221,7 +223,7 @@ void ext4_fill_in_sb()
 	sb->s_feature_compat = info.feat_compat;
 	sb->s_feature_incompat = info.feat_incompat;
 	sb->s_feature_ro_compat = info.feat_ro_compat;
-	generate_uuid("extandroid/make_ext4fs", info.label, sb->s_uuid);
+	memcpy(sb->s_uuid, info.uuid, 16);
 	memset(sb->s_volume_name, 0, sizeof(sb->s_volume_name));
 	strncpy(sb->s_volume_name, info.label, sizeof(sb->s_volume_name));
 	memset(sb->s_last_mounted, 0, sizeof(sb->s_last_mounted));
@@ -490,10 +492,86 @@ u64 parse_num(const char *arg)
 	return num;
 }
 
+static char nibble_to_hex_char(uint8_t nibble)
+{
+	const char *hexchars = "0123456789abcdef";
+
+	assert(nibble < 16);
+
+	return hexchars[nibble];
+}
+
+static uint8_t hex_char_to_nibble(char c)
+{
+	assert(isxdigit(c));
+
+	if (c >= '0' && c <= '9') {
+		return c - '0';
+	}
+
+	if (c >= 'a' && c <= 'f') {
+		return 10 + c - 'a';
+	}
+
+	assert(c >= 'A' && c <= 'F');
+	return 10 + c - 'A';
+}
+
+uint8_t *parse_uuid(uint8_t bytes[16], const char *str, size_t len)
+{
+	size_t i, pos;
+	uint8_t hi_nibble, lo_nibble;
+
+	assert(str);
+
+	for (i = 0, pos = 0; i < 16; ++i) {
+		while (pos < len && (ispunct(str[pos]) || isspace(str[pos]))) {
+			++pos;
+		}
+
+		if (pos >= len || !isxdigit(str[pos])) {
+			return NULL;
+		}
+		hi_nibble = hex_char_to_nibble(str[pos++]);
+
+		if (pos >= len || !isxdigit(str[pos])) {
+			return NULL;
+		}
+		lo_nibble = hex_char_to_nibble(str[pos++]);
+
+		bytes[i] = ((hi_nibble << 4) | lo_nibble);
+	}
+	return bytes;
+}
+
+/* 00000000-0000-0000-0000-000000000000 */
+char *uuid_bin_to_str(char *buf, size_t buf_size, const uint8_t bytes[16])
+{
+	const size_t uuid_str_size = ((16 * 2) + 4) + 1;
+	size_t i, pos;
+	uint8_t hi_nibble, lo_nibble;
+
+	assert(buf);
+	assert(buf_size >= uuid_str_size);
+
+	memset(buf, 0x00, buf_size);
+	for (i = 0, pos = 0; i < 16; ++i) {
+		hi_nibble = ((bytes[i] & 0xF0) >> 4);
+		lo_nibble = (bytes[i] & 0x0F);
+		buf[pos++] = nibble_to_hex_char(hi_nibble);
+		buf[pos++] = nibble_to_hex_char(lo_nibble);
+		if (i == 3 || i == 5 || i == 7 || i == 9) {
+			buf[pos++] = '-';
+		}
+	}
+	return buf;
+}
+
 int read_ext(int fd, int verbose)
 {
 	off_t ret;
 	struct ext4_super_block sb;
+	char buf[40];
 
 	read_sb(fd, &sb);
 
@@ -521,6 +599,7 @@ int read_ext(int fd, int verbose)
 		printf("    Inodes per group: %d\n", info.inodes_per_group);
 		printf("    Inode size: %d\n", info.inode_size);
 		printf("    Label: %s\n", info.label);
+		printf("    UUID: %s\n", uuid_bin_to_str(buf, sizeof(buf), info.uuid));
 		printf("    Blocks: %"PRIu64"\n", aux_info.len_blocks);
 		printf("    Block groups: %d\n", aux_info.groups);
 		printf("    Reserved block group size: %d\n", info.bg_desc_reserve_blocks);

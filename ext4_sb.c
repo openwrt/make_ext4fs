@@ -15,6 +15,7 @@
  */
 
 #include <errno.h>
+#include <string.h>
 
 #include "ext4_sb.h"
 
@@ -38,6 +39,7 @@ int ext4_parse_sb(struct ext4_super_block *sb, struct fs_info *info)
 	info->feat_incompat = sb->s_feature_incompat;
 	info->bg_desc_reserve_blocks = sb->s_reserved_gdt_blocks;
 	info->label = sb->s_volume_name;
+	memcpy(info->uuid, sb->s_uuid, 16);
 
 	len_blocks = ((uint64_t)sb->s_blocks_count_hi << 32) +
                 sb->s_blocks_count_lo;
