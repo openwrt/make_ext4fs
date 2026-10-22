@@ -283,6 +283,7 @@ void reduce_allocation(struct block_allocation *alloc, u32 len)
 static void init_bg(struct block_group_info *bg, unsigned int i)
 {
 	int header_blocks = 2 + aux_info.inode_table_blocks;
+	u32 inode;
 
 	bg->has_superblock = ext4_bg_has_super_block(i);
 
@@ -292,6 +293,8 @@ static void init_bg(struct block_group_info *bg, unsigned int i)
 	bg->bitmaps = calloc(info.block_size, 2);
 	bg->block_bitmap = bg->bitmaps;
 	bg->inode_bitmap = bg->bitmaps + info.block_size;
+	for (inode = info.inodes_per_group; inode < info.block_size * 8; inode++)
+		bitmap_set_bit(bg->inode_bitmap, inode);
 
 	bg->header_blocks = header_blocks;
 	bg->first_block = aux_info.first_data_block + i * info.blocks_per_group;
